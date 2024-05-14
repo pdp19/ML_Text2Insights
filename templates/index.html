@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text2Insights</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var fileInput = document.getElementById('file-upload');
+            var uploadButton = document.getElementById('uploadButton');
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    uploadButton.disabled = false;
+                } else {
+                    uploadButton.disabled = true;
+                }
+            });
+            document.getElementById('uploadForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                var formData = new FormData(this);
+                var file = fileInput.files[0];
+                uploadButton.disabled = true;
+                
+                if (!file || !file.name.endsWith('.csv')) {
+                    showError('Please select a valid CSV file!');
+                    var fileNameSpan = document.getElementById('fileName');
+                    fileNameSpan.innerText = '';
+                    return;
+                } else {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/upload');
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            console.log(xhr.responseText);
+                            alert('Upload successful!');
+                        } else {
+                            showError('Upload failed. Status: ' + xhr.status);
+                            console.error('Upload failed. Status: ' + xhr.status);
+                        }
+                    };
+                    xhr.send(formData);
+                }
+            });
+            var fileInput = document.getElementById('file-upload');
+            fileInput.addEventListener('change', function() {
+                updateFileName(this);
+            });
+            function updateFileName(input) {
+                var fileNameSpan = document.getElementById('fileName');
+                var file = input.files[0];
+                if (file) {
+                    fileNameSpan.innerText = file.name;
+                } else {
+                    fileNameSpan.innerText = '';
+                }
+            }
+            //submit button
+            document.getElementById('submitQuestionButton').addEventListener('click', function(event) {
+                submitQuestion();
+            });
+            
+            function submitQuestion() {
+                var question = document.getElementById('questionInput').value.trim();
+                var fileInput = document.getElementById('file-upload');
+                var file = fileInput.files[0];
+                var fileName = document.getElementById('fileName').innerText;
+                var outputElement = document.getElementById('answerOutput');
+                var submitButton = document.getElementById('submitQuestionButton');
+                var imageContainer = document.getElementById('imageContainer');
+                var existingImages = imageContainer.getElementsByTagName('img');
+            
+                for (var i = existingImages.length - 1; i >= 0; i--) {
+                    existingImages[i].parentNode.removeChild(existingImages[i]);
+                }
+            
+                function removeExistingTextSpans() {
+                    var existingText = imageContainer.querySelectorAll('span');
+                    existingText.forEach(function(span) {
+                        if (span.textContent.includes("I am not able to generate this chart")) {
+                            span.parentNode.removeChild(span);
+                        }
+                    });
+                }
+            
+                removeExistingTextSpans();
+                outputElement.value = "";
+            
+                if (!file) {
+                    showError('Please provide a CSV file with your data to query!');
+                    return;
+                }
+            
+                if (!question) {
+                    showError('Please provide a valid query for your dataset!');
+                    return;
+                }
+            
+                console.log('Question:', question);
+                clearError();
+            
+                overlay.style.display = 'flex';
+                document.body.style.pointerEvents = 'none';
+            
+                fetch('/get_data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({'question': question}),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    overlay.style.display = 'none';
+                    document.body.style.pointerEvents = 'auto';
+            
+                    if (data.data == "Empty dataset!") {
+                        outputElement.style.color = "red";
+                        outputElement.style.fontWeight = "bold";
+                        outputElement.style.fontSize = "14px";
+                        outputElement.value = "Looks like you are providing empty dataset. Please provide correct dataset!";
+                        submitButton.disabled = false;
+                        return;    
+                    } else {
+                        outputElement.style.color = "";
+                        outputElement.style.fontWeight = "";
+                        outputElement.style.fontSize = "";
+                    }
+            
+                    if (data.data == "Error Getting SQL Query!") {
+                        outputElement.style.color = "red";
+                        outputElement.style.fontWeight = "bold";
+                        outputElement.style.fontSize = "14px";
+                        outputElement.value = "Looks like you are providing incorrect question, which is not related to your dataset. Please provide valid question for your dataset!";
+                        submitButton.disabled = false;
+                        return;    
+                    } else {
+                        outputElement.style.color = "";
+                        outputElement.style.fontWeight = "";
+                        outputElement.style.fontSize = "";
+                    }
+            
+                    async function typeTextWithDelay(text) {
+                        return new Promise(resolve => {
+                            function typeText(text, index) {
+                                if (index < text.length) {
+                                    outputElement.value += text.charAt(index);
+                                    index++;
+                                    setTimeout(function() {
+                                        typeText(text, index);
+                                    }, 10);
+                                } else {
+                                    outputElement.value += "\n\n";
+                                    resolve();
+                                }
+                            }
+                            typeText(text, 0);
+                        });
+                    }
+            
+                    async function printData() {
+                        submitButton.disabled = true;
+                        outputElement.value = '';
+                        await typeTextWithDelay(data.question);
+                        await typeTextWithDelay(data.data);
+                        overlay.style.display = 'flex';
+                        document.body.style.pointerEvents = 'none';
+                    }
+            
+                    async function printInsightsDescription(description) {
+                        overlay.style.display = 'none';
+                        document.body.style.pointerEvents = 'auto';
+                        await typeTextWithDelay(description);
+                        submitButton.disabled = false;
+                    }
+            
+                    async function fetchSecondAPI() {
+                        return fetch('/get_insights', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({'question': question}),
+                        })
+                        .then(response => response.json())
+                        .catch(error => {
+                            console.error('Error fetching second API:', error);
+                            return Promise.reject(error);
+                        });
+                    }
+            
+                    Promise.all([printData(), fetchSecondAPI()])
+                    .then(([_, insightsData]) => {
+                        if (insightsData.description == "Error Getting Insights!") {
+                            outputElement.style.color = "red";
+                            outputElement.style.fontWeight = "bold";
+                            outputElement.style.fontSize = "14px";
+                            outputElement.value = "I am unavailable to provide insights for your question, Can you please try again or try with some other question!";
+                            submitButton.disabled = false;
+                            return;    
+                        } else {
+                            outputElement.style.color = "";
+                            outputElement.style.fontWeight = "";
+                            outputElement.style.fontSize = "";
+                        }
+            
+                        printInsightsDescription(insightsData.description);
+            
+                        if (!insightsData.chart.includes(".png")) {
+                            var textSpan = document.createElement('span');
+                            textSpan.style.color = "red";
+                            textSpan.style.fontWeight = "bold";
+                            textSpan.style.fontSize = "14px";
+                            var text = document.createTextNode("I am not able to generate this chart for your query. Please try with different chart type or question!\nError--> " + insightsData.chart);
+                            textSpan.appendChild(text);
+                            imageContainer.appendChild(textSpan);
+                        } else {
+                            var img = document.createElement('img');
+                            img.src = insightsData.chart;
+                            img.alt = 'Data Visualization';
+                            imageContainer.appendChild(img);
+                        }
+            
+                        //submitButton.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching first API:', error);
+                });
+            }                        
+            //end submit button
+            function showError(message) {
+                alert(message);
+            }
+            function clearError() {
+                // add functionality here to clear or hide any error messages displayed on the page
+            }
+        });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Insights for your data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-image: url('your-image-url.jpg'); /* Replace 'your-image-url.jpg' with your image URL */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        #fileName {
+            margin-right: 10px; /* Add margin between the span and the submit button */
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        input[type="submit"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h2>Upload CSV File</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="file-upload" class="custom-file-upload">
+            Select file
+        </label>
+        <input id="file-upload" type="file" name="file" onchange="updateFileName(this)">
+        <span id="fileName"></span>
+        <input type="submit" value="Upload" id="uploadButton" disabled>
+    </form>
+    <hr>
+    <h2>Ask a query related to your data</h2>
+    <textarea id="questionInput" rows="2" placeholder="Ask any visualization query from your data..."></textarea>
+    <br>
+    <div class="overlay" id="overlay">
+        <div class="loader"></div>
+    </div>
+    <button type="button" id="submitQuestionButton">Submit</button>
+    <hr>
+    <h2>Text2Insights Answer</h2>
+    <textarea id="answerOutput" rows="30" placeholder="Text2Insights says..." readonly style="white-space: pre; overflow-x: auto;"></textarea>
+    <div id="imageContainer"></div>
+</body>
+</html>

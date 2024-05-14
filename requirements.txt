@@ -1,0 +1,16 @@
+Flask
+transformers
+num2words
+pandas
+accelerate
+torch
+bitsandbytes
+sqlparse
+sentencepiece
+pandasql
+groq==0.4.1
+python-dotenv
+matplotlib
+seaborn
+scikit-learn
+numpy
