@@ -1,10 +1,6 @@
 Flask
-transformers
 num2words
 pandas
-accelerate
-torch
-bitsandbytes
 sqlparse
 sentencepiece
 pandasql

@@ -247,7 +247,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-image: url('your-image-url.jpg'); /* Replace 'your-image-url.jpg' with your image URL */
+            background-image: url('static/bg5.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -345,6 +345,7 @@
             100% { transform: rotate(360deg); }
         }
     </style>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
     <h2>Upload CSV File</h2>
