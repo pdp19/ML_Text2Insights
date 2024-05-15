@@ -247,7 +247,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-image: url('static/bg5.png');
+            background-image: url('static/bg6.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -348,7 +348,7 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
-    <h2>Upload CSV File</h2>
+    <h3>Upload CSV File</h3>
     <form id="uploadForm" enctype="multipart/form-data">
         <label for="file-upload" class="custom-file-upload">
             Select file
@@ -358,7 +358,7 @@
         <input type="submit" value="Upload" id="uploadButton" disabled>
     </form>
     <hr>
-    <h2>Ask a query related to your data</h2>
+    <h3>Ask a query related to your data</h3>
     <textarea id="questionInput" rows="2" placeholder="Ask any visualization query from your data..."></textarea>
     <br>
     <div class="overlay" id="overlay">
@@ -366,8 +366,8 @@
     </div>
     <button type="button" id="submitQuestionButton">Submit</button>
     <hr>
-    <h2>Text2Insights Answer</h2>
-    <textarea id="answerOutput" rows="30" placeholder="Text2Insights says..." readonly style="white-space: pre; overflow-x: auto;"></textarea>
+    <h3>Text2Insights Answer</h3>
+    <textarea id="answerOutput" rows="20" placeholder="Text2Insights says..." readonly style="white-space: pre; overflow-x: auto;"></textarea>
     <div id="imageContainer"></div>
 </body>
 </html>

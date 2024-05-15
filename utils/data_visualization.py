@@ -82,6 +82,10 @@ class DataVisualization():
     
     def create_line_chart(self, df, x_axis, y_axis):
         try:
+            numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+            if len(numeric_cols) < 1:
+                return f"Line plot is not suitable for this dataset, as dataframe does not have required numeric value columns!"
+            df = df[numeric_cols]
             df.plot(kind='line', marker='o', linestyle='-')
             plt.title('Line Chart for your Question', fontsize=16, fontweight='bold')
             plt.grid(True, linestyle='--', alpha=0.5)
@@ -160,6 +164,10 @@ class DataVisualization():
     
     def create_histogram_chart(self, df, x_axis, y_axis):
         try:
+            numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+            if len(numeric_cols) < 1:
+                return f"Hostogram plot is not suitable for this dataset, as dataframe does not have required numeric value columns!"
+            # df = df[numeric_cols]
             if df[x_axis].dtype in ('int64', 'float64'):
                 numeric = df[x_axis]
                 label = x_axis
