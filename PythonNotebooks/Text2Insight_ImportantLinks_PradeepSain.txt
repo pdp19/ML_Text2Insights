@@ -1,0 +1,18 @@
+Video PPT Link - 
+
+
+GitHub Link -
+https://github.com/pdp19/ML_Text2Insights
+
+Deployed Model on Hugging Face -
+https://huggingface.co/pdp19/document_question_answering_model
+https://huggingface.co/pdp19/ipl_match_winner_predictor
+
+Uploaded dataset on Hugging Face -
+https://huggingface.co/datasets/pdp19/context_question_answer
+https://huggingface.co/datasets/pdp19/Cricket_Dataset
+
+Dataset Links -
+https://www.kaggle.com/datasets/mahendran1/icc-cricket
+https://www.kaggle.com/datasets/veeralakrishna/cricsheet-a-retrosheet-for-cricket (https://cricsheet.org/)
+https://huggingface.co/datasets/VictorDCh/spider-clean-text-to-sql (For Results Verification)
